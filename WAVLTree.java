@@ -10,12 +10,12 @@
 public class WAVLTree {
   
   WAVLNode root;
-	public static final EXT = WAVLNode(-1, null);
+  public static final WAVLNode EXT = new WAVLNode(-1, null);
   
-	public WAVLTree()
-	{
-		this.root = EXT;
-	}
+  public WAVLTree()
+  {
+    this.root = EXT;
+  }
 	
   /**
    * public boolean empty()

@@ -8,7 +8,9 @@
  */
 
 public class WAVLTree {
-
+  
+  WAVLNode root;
+  
   /**
    * public boolean empty()
    *

@@ -10,7 +10,13 @@
 public class WAVLTree {
   
   WAVLNode root;
+	public static final EXT = WAVLNode(-1, null);
   
+	public WAVLTree()
+	{
+		this.root = EXT;
+	}
+	
   /**
    * public boolean empty()
    *
@@ -18,7 +24,7 @@ public class WAVLTree {
    *
    */
   public boolean empty() {
-    return false; // to be replaced by student code
+    return (this.root == EXT);
   }
 
  /**
@@ -112,18 +118,29 @@ public class WAVLTree {
     */
    public int size()
    {
-           return 42; // to be replaced by student code
+		 if (this.root == EXT)
+		 {
+			 return 0;
+		 }
+		 else
+		 {
+		   return this.root.getSubtreeSize();
+		 }
    }
    
      /**
-    * public WAVLNode getRoot()
-    *
-    * Returns the root WAVL node, or null if the tree is empty
-    *
+    * @return $ret == null => tree is empty
     */
    public WAVLNode getRoot()
    {
-           return null;
+     if (this.root == EXT)
+		 {
+			 return null;
+		 }
+		 else
+		 {
+		 	 return this.root;
+		 }
    }
      /**
     * public int select(int i)
@@ -143,31 +160,88 @@ public class WAVLTree {
    * public class WAVLNode
    */
   public class WAVLNode{
-                public int getKey()
-                {
-                        return 42; // to be replaced by student code
-                }
-                public String getValue()
-                {
-                        return null; // to be replaced by student code
-                }
-                public WAVLNode getLeft()
-                {
-                        return null; // to be replaced by student code
-                }
-                public WAVLNode getRight()
-                {
-                        return null; // to be replaced by student code
-                }
-                public boolean isInnerNode()
-                {
-                        return true; // to be replaced by student code
-                }
+      private int key;
+      private int size;
+      private int rank;
+      private String value;
+    
+      private WAVLNode parent;
+      private WAVLNode left;
+      private WAVLNode right;
+      
+			/**
+			* @pre @param.key >= 0
+			* @pre @param.value != null
+			* @post this.parent == null && this.right == EXT && this.left == EXT
+			*/
+      public WAVLNode(int key, String value)
+			{
+				this.key = key;
+				this.value = value;
+				this.setRight(EXT);
+				this.setLeft(EXT);
+			}
+    
+      public int getKey()
+      {
+				return this.key;
+      }
+		
+      public String getValue()
+      {
+      	return this.value;
+      }
+		
+      public WAVLNode getLeft()
+      {
+				if (this.left == EXT)
+				{
+      		return null;
+				}
+				else
+				{
+					return this.left
+				}
+      }
+		
+			public void setLeft(WAVLNode newLeft)
+			{
+				this.left = newLeft;
+			}
+		
+      public WAVLNode getRight()
+      {
+				if (this.right == EXT)
+				{
+      		return null;
+				}
+				else
+				{
+					return this.right;
+				}
+      }
+		
+			public void setRight(WAVLNode newRight)
+			{
+				this.left = newRight;
+			}
+		
+      public boolean isInnerNode()
+      {
+      	return (this.getLeft() == EXT && this.getRight == EXT)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+      }
 
-                public int getSubtreeSize()
-                {
-                        return 42; // to be replaced by student code
-                }
+      public int getSubtreeSize()
+      {
+      	return this.size;
+      }
   }
 
 }

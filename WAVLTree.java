@@ -616,7 +616,7 @@ public class WAVLTree {
 				} else {
 					this.getParent().setRight(this.left);
 				}
-			} else if (this.getLeft() == null & this.getRight() != null) // if
+			} else if (this.getLeft() == EXT & this.getRight() != EXT) // if
 																			// this
 																			// has
 																			// right

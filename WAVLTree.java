@@ -11,21 +11,22 @@ public class WAVLTree {
 	private WAVLNode root;
 
 	/**
-	 * @param node
-	 * TODO - set node parent as null?
+	 * @post: node is this's root, and it's parent is null.
+	 * 
 	 */
 	public void setRoot(WAVLNode node) {
 		this.root = node;
+		node.setParent(null);
 	}
 
 	/**
-	 * static external leaf (rank -1)
+	 * static external leaf (rank -1).
+	 * EXT's parent is null at all times.
 	 */
 	public static final WAVLNode EXT = new WAVLNode(-1, null, 0, -1);
 
 	/**
 	 * constructor of an empty tree with EXT as root
-	 * TODO parent of root(EXT) == null?
 	 * some functions (update size up to root, exm.)
 	 * stop when they reach null.
 	 * need to to keep parent of root as null at all times 
@@ -47,7 +48,7 @@ public class WAVLTree {
 	/**
 	 * public String search(int k)
 	 *
-	 * returns the info of an item with key k if it exists in the tree
+	 * @return info of an item with key k ,if it exists in the tree
 	 * otherwise, returns null
 	 * 
 	 * use searchNode function, return null if EXT found or WAVLNode with a
@@ -55,7 +56,7 @@ public class WAVLTree {
 	 */
 	public String search(int k) {
 		WAVLNode ret = searchNode(k);
-		if (ret == EXT || ret.getKey() != k) {
+		if (ret == null || ret.getKey() != k) {
 			return null;
 		} else {
 			return ret.getValue();
@@ -68,15 +69,18 @@ public class WAVLTree {
 	 * iterative function
 	 * 
 	 * @pre: root!=null
-	 * @post: @return: the leaf that will be parent of inserted key, or node
+	 * @return: the leaf that will be parent of inserted key, or node
 	 *        with key in tree, if exists
+	 * 
+	 * the function use an iterative binary search on the tree
+	 * 
 	 */
 	public WAVLNode searchNode(int k) {
 		WAVLNode current = root;
 		if (current == EXT) {
 			return EXT;
 		}
-		while (true) // loop will stop at some point
+		while (true)
 		{// while current is not an external leaf
 			if (current.getKey() == k) {// if key exists in tree, return it
 				return current;
@@ -84,36 +88,40 @@ public class WAVLTree {
 
 			// if k bigger then current key and right child exists, go right
 
-			if (k > current.getKey() && current.getRight() != EXT) {
-				current = current.getRight();
+			if (k > current.getKey()){
+				if (current.hasRight()){
+					current = current.getRight();
+				}
+				else {
+					return current;
+				}
 			}
-
-			//if k bigger then current key, and right is EXT, return current			
-			else if (k > current.getKey() && current.getRight() == EXT) {
-				return current;
-			}
-
-			// same with left
-
-			else if (k < current.getKey() && current.getLeft() != EXT) {
-				current = current.getLeft();
-			}
-
+			
 			else {
-				return current;
+				if (current.hasLeft()){
+					current = current.getLeft();
+				}
+				else {
+					return current;
+				}
 			}
+
 		}
 	}
 
 	/**
+	 * public void updateSizeToRoot
+	 * 
+	 * @post: for every node, node.size is: 1+node.left.size+node.right.size
 	 * 
 	 * updates sizes of all nodes from input node, up to root, based on sizes of
 	 * both children (size = left child size+ right child size +1)
+	 * 
+	 * TODO - EXTnull
 	 */
 	public void updateSizeToRoot(WAVLNode node) {
 		while (node != null) {
-			node.size = 1 + node.getLeft().getSubtreeSize() 
-					+ node.getRight().getSubtreeSize();
+			node.updateSize();
 			node = node.getParent();
 
 		}
@@ -135,7 +143,6 @@ public class WAVLTree {
 
 		if (empty()) { // if tree is empty
 			this.setRoot(new_node); // set new_node as root
-			//TODO - set new_node parent to null?/parent is null by default? define at set root
 			return ops_counter;
 		}
 
@@ -238,7 +245,8 @@ public class WAVLTree {
 			}
 			else { //to_delete is the root - parent is null
 				// set root as EXT
-				this.root=EXT;
+				//TODO - maybe create setRoot(WAVLNode) func
+				this.setRoot(EXT);
 				return 0;
 			}
 
@@ -270,10 +278,7 @@ public class WAVLTree {
 			 * 
 			 */
 			to_balance = transplant(to_delete);
-			/*
-			 * is this resizing really needed? just in case. possible to remove.
-			 * TODO
-			 */
+
 			to_balance.updateSize();
 
 		}
@@ -282,12 +287,14 @@ public class WAVLTree {
 		/*
 		 * in WAVL tree we have 4 rebalancing operations after deletion: special
 		 * case: first check is a (2,2) leaf - **and after every rotation(?)
-		 * case 1: (3,2)/(2,3) node =>demote node case 2: (3,1)&(2,2) left
+		 * case 1: (3,2)/(2,3) node =>demote node 
+		 * case 2: (3,1)&(2,2) left
 		 * child/(1,3)&(2,2) right child => double demote case 1 and case 2 can
 		 * bubble up, require a while loop
 		 * 
 		 * case 3: (3,1)&(1/2,1)right child=> rotate left right child
-		 * (1,3)&(1,1/2) left child=> rotate right left child case 4:
+		 * (1,3)&(1,1/2) left child=> rotate right left child 
+		 * case 4:
 		 * (3,1)&(1,2)right child=>rotate right left child of right child,
 		 * rotate left (1,3)&(2,1)left child=>rotate left right child of left
 		 * child, rotate right case 3 and case 4 are terminal(?)
@@ -302,7 +309,7 @@ public class WAVLTree {
 		if (to_balance.deleteIs22Leaf()) {
 			to_balance.deleteUpdate22Leaf();
 			ops_counter++;
-			to_balance.size--; // decrease size by 1
+			to_balance.updateSize(); // decrease size by 1
 			to_balance = to_balance.getParent();
 		}
 
@@ -343,7 +350,7 @@ public class WAVLTree {
 		}
 		if (to_balance != null && to_balance.deleteIsCase4()) {
 			to_balance.deleteUpdateCase4();
-			ops_counter += 6; // 2 rotations + 4 pro/dem
+			ops_counter += 7; // 2 rotations + 5 pro/dem
 			updateSizeToRoot(to_balance.getParent());
 		}
 
@@ -456,7 +463,11 @@ public class WAVLTree {
 		public WAVLNode(int key, String value) {
 			this(key, value, 1, 0);
 		}
-
+		
+		/**
+		 * overloading of WAVLNode constructor, for the special case of
+		 * EXT creation in WAVLTree 
+		 */
 		public WAVLNode(int key, String value, int size, int rank) {
 			this.key = key;
 			this.value = value;
@@ -476,7 +487,11 @@ public class WAVLTree {
 		 * @return: this.getRank-rank.getLeft.getRank() 
 		 */
 		public int rankDiffLeft() {
-			return (this.getRank() - this.getLeft().getRank());
+			if (this.hasLeft()){
+				return (this.getRank() - this.getLeft().getRank());}
+			else {
+				return (this.getRank() + 1);
+			}
 		}
 		
 		/**
@@ -484,7 +499,11 @@ public class WAVLTree {
 		 * @return: this.getRank-rank.getRight.getRank()
 		 */
 		public int rankDiffRight() {
-			return (this.getRank() - this.getRight().getRank());
+			if (this.hasRight()){
+				return (this.getRank() - this.getRight().getRank());}
+			else {
+				return (this.getRank() + 1);
+			}
 		}
 
 		/**
@@ -509,7 +528,7 @@ public class WAVLTree {
 		 */
 		public boolean insertIsCase2() {
 			return (this.rankDiffLeft() == 0 && this.rankDiffRight() == 2 
-					&& this.getLeft().rankDiffLeft() == 1
+					&& this.getLeft().rankDiffLeft() == 1 //left right child, cannot be EXT
 					&& this.getLeft().rankDiffRight() == 2)
 					|| (this.rankDiffLeft() == 2 && this.rankDiffRight() == 0 
 					&& this.getRight().rankDiffLeft() == 2
@@ -518,9 +537,9 @@ public class WAVLTree {
 
 		public void insertUpdateCase2() {
 			if (this.rankDiffLeft() == 0) {
-				rotateRight(this.getLeft()); // rotate right the left child
+				rotateLeftChild(this); // rotate right the left child
 			} else {
-				rotateLeft(this.getRight()); // rotate left the right child
+				rotateRightChild(this); // rotate left the right child
 			}
 			this.rank--;
 		}
@@ -533,30 +552,23 @@ public class WAVLTree {
 		public boolean insertIsCase3() {
 			return (this.rankDiffLeft() == 0 && this.rankDiffRight() == 2 
 					&& this.getLeft().rankDiffLeft() == 2
-					&& this.getRight().rankDiffRight() == 1)
+					&& this.getRight().rankDiffRight() == 1) //left or right child, CANNOT be EXT
 					|| (this.rankDiffLeft() == 2 && this.rankDiffRight() == 0 
 					&& this.getLeft().rankDiffLeft() == 1
 							&& this.getRight().rankDiffRight() == 2);
 		}
 
 		public void insertUpdateCase3() {
-			int ops = 0;
 			if (this.rankDiffLeft() == 0) { // if case 3-left (i.e, 0 edge on left)
-				rotateLeft(this.getLeft().getRight()); // rotate left the right
-														// child of left child
-														// of this
-				rotateRight(this.getLeft()); // rotate right (newly assigned,
-												// prev grandchild of this) left
-												// child of this
+				doubleRotateLeftChild(this);
 			}
 
 			else // same on right
 			{
-				rotateRight(this.getRight().getLeft());
-				rotateLeft(this.getRight());
+				doubleRotateRightChild(this);
 			}
 			//set current working node is this parent
-			WAVLNode this_parent = this.getParent();
+			WAVLNode this_parent = this.getParent();//TODO check if not problematic
 
 			//update ranks
 			this_parent.rank++;
@@ -576,12 +588,9 @@ public class WAVLTree {
 		public void deleteLeaf() {
 			if (this.isLeft()) // if to_del is left son, nullify
 			{
-				this.getParent().left = EXT; // TODO -BUG: set left sets node as
-												// EXT parent - use of setLeft
-												// do we care what's in EXT's
-												// parent field?
+				this.getParent().setLeft(EXT); 
 			} else {
-				this.getParent().right = EXT;
+				this.getParent().setRight(EXT);
 			}
 		}
 
@@ -591,7 +600,15 @@ public class WAVLTree {
 		 */
 		public void updateSize() {
 			if (this != EXT) {
-				this.size = 1 + this.getLeft().getSubtreeSize() + +this.getRight().getSubtreeSize();
+				int leftSize = 0;
+				int rightSize = 0;
+				if (this.hasLeft()){
+					leftSize = this.getLeft().getSubtreeSize();
+				}
+				if (this.hasRight()){
+					rightSize = this.getRight().getSubtreeSize();
+				}
+				this.size = 1 + leftSize + rightSize;
 			}
 		}
 
@@ -599,8 +616,14 @@ public class WAVLTree {
 		 * @return true iff this has exactly one child
 		 */
 		public boolean isUnary() {
-			return ((this.getLeft() != EXT && this.getRight() == EXT)
-					|| (this.getLeft() == EXT && this.getRight() != EXT));
+			if ( (this.hasLeft() & !this.hasRight()) ||
+				 (!this.hasLeft() & this.hasRight()) ){
+				return true;
+			}
+			else {
+				return false;
+			}
+
 		}
 
 		/**
@@ -608,24 +631,19 @@ public class WAVLTree {
 		 * @post: no node has this as child
 		 */
 		public void deleteUnary() {
-			if (this.getLeft() != EXT & this.getRight() == EXT) // if this has
-																// left child
+			if (this.hasLeft()) // if this has left child
 			{
 				if (this.isLeft()) {// if this is a left child
-					this.getParent().setLeft(this.left);
+					this.getParent().setLeft(this.getLeft());
 				} else {
-					this.getParent().setRight(this.left);
+					this.getParent().setRight(this.getLeft());
 				}
-			} else if (this.getLeft() == EXT & this.getRight() != EXT) // if
-																			// this
-																			// has
-																			// right
-																			// child
+			} else if (this.hasRight())
 			{
 				if (this.isLeft()) {
-					this.getParent().setLeft(this.right);
+					this.getParent().setLeft(this.getRight());
 				} else {
-					this.getParent().setRight(this.right);
+					this.getParent().setRight(this.getRight());
 				}
 			}
 		}
@@ -636,7 +654,9 @@ public class WAVLTree {
 		 * @return: true iff this is a 2,2 leaf
 		 */
 		public boolean deleteIs22Leaf() {
-			return ((!this.isInnerNode()) && this.rankDiffLeft() == 2 && this.rankDiffRight() == 2);
+			return ((!this.isInnerNode()) &&
+					this.rankDiffLeft() == 2 &&
+					this.rankDiffRight() == 2);
 		}
 
 		public void deleteUpdate22Leaf() {
@@ -647,7 +667,8 @@ public class WAVLTree {
 		 * @return: true iff this is a case 1 node, i.e, (3,2) or (2,3) node
 		 */
 		public boolean deleteIsCase1() {
-			return (this.rankDiffLeft() == 3 && this.rankDiffRight() == 2) || (this.rankDiffLeft() == 2 && this.rankDiffRight() == 3);
+			return (this.rankDiffLeft() == 3 & this.rankDiffRight() == 2) 
+					|| (this.rankDiffLeft() == 2 & this.rankDiffRight() == 3);
 		}
 
 		public void deleteUpdateCase1() {
@@ -659,16 +680,18 @@ public class WAVLTree {
 		 *          right child, or (1,3) node with (2,2) left child
 		 */
 		public boolean deleteIsCase2() {
-			return (this.rankDiffLeft() == 3 && this.rankDiffRight() == 1 && this.getRight().rankDiffLeft() == 2
-					&& this.getRight().rankDiffRight() == 2)
-					|| (this.rankDiffRight() == 3 && this.rankDiffLeft() == 1 && this.getLeft().rankDiffLeft() == 2
-							&& this.getLeft().rankDiffRight() == 2);
+			return (this.rankDiffLeft() == 3 & this.rankDiffRight() == 1 
+					& this.getRight().rankDiffLeft() == 2
+					& this.getRight().rankDiffRight() == 2)
+					|| (this.rankDiffRight() == 3 & this.rankDiffLeft() == 1 
+					& this.getLeft().rankDiffLeft() == 2
+							& this.getLeft().rankDiffRight() == 2);
 
 		}
 
 		public void deleteUpdateCase2() {
 			this.rank--;
-			if (this.rankDiffLeft() == 3) {
+			if (this.rankDiffRight() == 0) {
 				this.getRight().rank--;
 			} else {
 				this.getLeft().rank--;
@@ -682,22 +705,22 @@ public class WAVLTree {
 		 *          child
 		 */
 		public boolean deleteIsCase3() {
-			return (this.rankDiffLeft() == 3 && this.rankDiffRight() == 1
-					&& (this.getRight().rankDiffLeft() == 1 || this.getRight().rankDiffLeft() == 2)
-					&& this.getRight().rankDiffRight() == 1)
-					|| (this.rankDiffRight() == 3 && this.rankDiffLeft() == 1
-							&& (this.getLeft().rankDiffRight() == 1 || this.getLeft().rankDiffRight() == 2)
-							&& this.getLeft().rankDiffLeft() == 1);
+			return ((this.rankDiffLeft() == 3 && this.rankDiffRight() == 1)
+					&& (this.getRight().rankDiffLeft() == 1))
+					|| ((this.rankDiffRight() == 3 && this.rankDiffLeft() == 1)
+							&& (this.getLeft().rankDiffRight() == 1));
 		}
 
 		public int deleteUpdateCase3() {
 			int ops = 0;
 			if (this.rankDiffLeft() == 3) {
-				rotateRight(this.getLeft());
+				rotateRightChild(this);
 			} else {
-				rotateLeft(this.getRight());
+				rotateLeftChild(this);
 			}
-			ops += 2;
+			this.rank--;//demote z
+			this.getParent().rank++;//promote y
+			ops += 3;
 			if (this.deleteIs22Leaf()) {
 				this.rank--;
 				ops++;
@@ -713,10 +736,11 @@ public class WAVLTree {
 		 *          node with (2,1) left child
 		 */
 		public boolean deleteIsCase4() {
-			return (this.rankDiffLeft() == 3 && this.rankDiffRight() == 1 && this.getRight().rankDiffLeft() == 1
-					&& this.getRight().rankDiffRight() == 2)
-					|| (this.rankDiffLeft() == 1 && this.rankDiffRight() == 3 && this.getLeft().rankDiffLeft() == 2
-							&& this.getLeft().rankDiffRight() == 1);
+			return ((this.rankDiffLeft() == 3 
+					&& this.rankDiffRight() == 1) 
+					&& (this.getRight().rankDiffRight() == 2))
+					|| ((this.rankDiffLeft() == 1 && this.rankDiffRight() == 3) 
+					&& (this.getLeft().rankDiffLeft() == 2));
 		}
 		
 		/**
@@ -727,13 +751,11 @@ public class WAVLTree {
 		 */
 		public void deleteUpdateCase4() {
 			if (this.rankDiffLeft() == 3) {
-				rotateRight(this.getRight().getLeft());
-				rotateLeft(this.getRight());
+				doubleRotateRightChild(this);
 				this.getParent().getRight().rank--;
 				this.getParent().getRight().updateSize();
 			} else {
-				rotateLeft(this.getLeft().getRight());
-				rotateRight(this.getLeft());
+				doubleRotateLeftChild(this);
 				this.getParent().getLeft().rank--;
 				this.getParent().getLeft().updateSize();
 			}
@@ -746,7 +768,6 @@ public class WAVLTree {
 
 
 		/**
-		 * 
 		 * @return rank of node
 		 */
 		public int getRank() {
@@ -765,9 +786,15 @@ public class WAVLTree {
 		/**
 		 * 
 		 * @return: left child, can be a regular WAVLNode or EXT
+		 * if EXT, return null
 		 */
 		public WAVLNode getLeft() {
+			if (hasLeft()){
 				return this.left;
+			}
+			else {
+				return null;
+			}
 		}
 
 		/**
@@ -775,20 +802,29 @@ public class WAVLTree {
 		 */
 		public void setLeft(WAVLNode newLeft) {
 			this.left = newLeft;
-			this.getLeft().setParent(this);
+			if (newLeft!=EXT){
+				this.getLeft().setParent(this);
+			}
 		}
 
 		/**
 		 * 
 		 * @return: right child, can be a regular WAVLNode or EXT
 		 */
-		public WAVLNode getRight() {
-				return this.right;
+		public WAVLNode getRight() {//TODO - return null if child is EXT?
+				if (hasRight()){
+					return this.right;
+				}
+				else {
+					return null;
+				}
 		}
 
 		public void setRight(WAVLNode newRight) {
 			this.right = newRight;
-			this.getRight().setParent(this);
+			if (newRight!=EXT){
+				this.getLeft().setParent(this);
+			}
 		}
 
 		/**
@@ -803,33 +839,35 @@ public class WAVLTree {
 		}
 		
 		/**
+		 * @return: true iff both this' children are EXT
 		 * 
-		 * @return: true iff at least one of this children are EXT
 		 */
 		public boolean isInnerNode() {
-			if (this.getLeft() == EXT && this.getRight() == EXT) {
-				return false;
-			} else {
-				return true;
-			}
+			return !(this.getLeft() == EXT && this.getRight() == EXT);
 		}
 
 		public int getSubtreeSize() {
 			return this.size;
 		}
-
-		/**
-		 * @return @ret: true iff this is left son of parent
-		 */
-		public boolean isLeft() {
-			if (this.getParent().getLeft() == this) {
-				return true;
-			} else {
+		
+		public boolean hasLeft() {
+			if (this.left==EXT){
 				return false;
+			}
+			else {
+				return true;
+			}
+		}
+		
+		public boolean hasRight() {
+			if (this.right==EXT){
+				return false;
+			}
+			else {
+				return true;
 			}
 		}
 
-	}
-
 	
+}
 }

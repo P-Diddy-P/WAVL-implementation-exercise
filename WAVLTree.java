@@ -9,7 +9,11 @@
 public class WAVLTree {
 
 	private WAVLNode root;
-
+	/**
+	 * static external leaf (rank -1).
+	 * EXT's parent is null at all times.
+	 */
+	public static final WAVLNode EXT = new WAVLNode(-1, null, 0, -1);
 	/**
 	 * @post: node is this's root, and it's parent is null.
 	 * 
@@ -18,12 +22,6 @@ public class WAVLTree {
 		this.root = node;
 		node.setParent(null);
 	}
-
-	/**
-	 * static external leaf (rank -1).
-	 * EXT's parent is null at all times.
-	 */
-	public static final WAVLNode EXT = new WAVLNode(-1, null, 0, -1);
 
 	/**
 	 * constructor of an empty tree with EXT as root
@@ -367,7 +365,12 @@ public class WAVLTree {
 	 * if the tree is empty
 	 */
 	public String min() {
-		return "42"; // to be replaced by student code
+		WAVLNode minNode = this.getRoot();
+		
+		while (minNode.hasLeft()) {
+			minNode = minNode.getLeft();
+		}
+		return minNode.getValue();
 	}
 
 	/**
@@ -377,7 +380,12 @@ public class WAVLTree {
 	 * the tree is empty
 	 */
 	public String max() {
-		return "42"; // to be replaced by student code
+		WAVLNode maxNode = this.getRoot();
+		
+		while (maxNode.hasRight()) {
+			maxNode = maxNode.getRight();
+		}
+		return maxNode.getValue();
 	}
 
 	/**
@@ -387,8 +395,23 @@ public class WAVLTree {
 	 * array if the tree is empty.
 	 */
 	public int[] keysToArray() {
-		int[] arr = new int[42]; // to be replaced by student code
-		return arr; // to be replaced by student code
+		int[] keyArray = new int[this.size()];
+		
+		keysToArrayRec(this.getRoot(), keyArray, 0);
+		
+		return keyArray;
+	}
+	
+	private int keysToArrayRec(WAVLNode node, int[] resultArray, int writeIndex) {
+		if (node.hasLeft()) {
+			writeIndex = keysToArrayRec(node.getLeft(), resultArray, writeIndex);
+		}
+		resultArray[writeIndex] = node.getKey();
+		writeIndex++;
+		if (node.hasRight()) {
+			writeIndex = keysToArrayRec(node.getRight(), resultArray, writeIndex);
+		}
+		return writeIndex;
 	}
 
 	/**
@@ -398,8 +421,23 @@ public class WAVLTree {
 	 * respective keys, or an empty array if the tree is empty.
 	 */
 	public String[] infoToArray() {
-		String[] arr = new String[42]; // to be replaced by student code
-		return arr; // to be replaced by student code
+		String[] infoArray = new String[this.size()];
+
+		infoToArrayRec(this.getRoot(), infoArray, 0);
+		
+		return infoArray;
+	}
+	
+	private int infoToArrayRec(WAVLNode node, String[] resultArray, int writeIndex) {
+		if (node.hasLeft()) {
+			writeIndex = infoToArrayRec(node.getLeft(), resultArray, writeIndex);
+		}
+		resultArray[writeIndex] = node.getValue();
+		writeIndex++;
+		if (node.hasRight()) {
+			writeIndex = infoToArrayRec(node.getRight(), resultArray, writeIndex);
+		}
+		return writeIndex;
 	}
 
 	/**
@@ -409,11 +447,7 @@ public class WAVLTree {
 	 *
 	 */
 	public int size() {
-		if (this.root == EXT) {
-			return 0;
-		} else {
-			return this.root.getSubtreeSize();
-		}
+		return this.root.getSubtreeSize();
 	}
 
 	/**
@@ -430,17 +464,86 @@ public class WAVLTree {
 	/**
 	 * public int select(int i)
 	 *
-	 * Returns the value of the i'th smallest key (return -1 if tree is empty)
-	 * Example 1: select(1) returns the value of the node with minimal key
-	 * Example 2: select(size()) returns the value of the node with maximal key
-	 * Example 3: select(2) returns the value 2nd smallest minimal node, i.e the
-	 * value of the node minimal node's successor
-	 *
+	 * Returns the value of the i'th smallest key (return null if tree is empty)
+	 * Example 1: select(1) returns the value of the node with minimal key Example
+	 * 2: select(size()) returns the value of the node with maximal key Example 3:
+	 * select(2) returns the value 2nd smallest minimal node, i.e the value of the
+	 * node minimal node's successor
 	 */
 	public String select(int i) {
-		return null;
+		if (i > this.getRoot().getSubtreeSize()) {
+			return null;
+		}
+		
+		WAVLNode selectedNode = this.getRoot();
+		int nodeIndex = selectedNode.getLeft().getSubtreeSize() + 1;
+		while (nodeIndex != i) {
+			if (i > nodeIndex) {
+				selectedNode = selectedNode.getRight();
+				nodeIndex += (selectedNode.getLeft().getSubtreeSize() + 1);
+			} else if (i < nodeIndex) {
+				selectedNode = selectedNode.getLeft();
+				nodeIndex -= (selectedNode.getRight().getSubtreeSize() + 1);
+			}
+		}
+		return selectedNode.getValue();
 	}
-
+	
+	/**
+	 * @param rotNode.parent != null
+	 * @param rotNode != EXT
+	 */
+	private static void rotate(WAVLNode rotNode) {
+		WAVLNode tempPar = rotNode.getParent();
+		
+		if (rotNode.isRight()) { // rotNode is a right child
+			WAVLNode tempChild = rotNode.getLeft();
+			rotNode.setParent(rotNode.getParent().getParent());
+			rotNode.setLeft(tempPar);
+			rotNode.getLeft().setRight(tempChild);
+			
+		} else { // rotNode is a left child
+			WAVLNode tempChild = rotNode.getRight();
+			rotNode.setParent(rotNode.getParent().getParent());
+			rotNode.setRight(tempPar);
+			rotNode.getRight().setLeft(tempChild);
+		}
+	}
+	
+	/**
+	 * @param node.right != EXT
+	 * @post @param.node.parent == @pre @param.node.right
+	 */
+	public static void rotateRightChild(WAVLNode node) {
+		rotate(node.getRight());
+	}
+	
+	/**
+	 * @pre @param.node.left != EXT
+	 * @post @param.node.parent == @pre @param.node.left
+	 */
+	public static void rotateLeftChild(WAVLNode node) {
+		rotate(node.getLeft());
+	}
+	
+	/**
+	 * @pre @param.node.right.left != EXT
+	 */
+	public static void doubleRotateRightChild(WAVLNode node) {
+		rotate(node.getRight().getLeft());
+		rotate(node.getRight());
+	}
+	
+	
+	/**
+	 * @pre @param.node.left.right != EXT
+	 */
+	public static void doubleRotateLeftChild(WAVLNode node) {
+		rotate(node.getLeft().getRight());
+		rotate(node.getLeft());
+	}
+	
+	
 	/**
 	 * public class WAVLNode
 	 */
@@ -789,8 +892,11 @@ public class WAVLTree {
 		 * if EXT, return null
 		 */
 		public WAVLNode getLeft() {
-			if (hasLeft()){
+
+			if (this.hasLeft()) {
 				return this.left;
+			} else {
+				return null;
 			}
 			else {
 				return null;
@@ -807,23 +913,21 @@ public class WAVLTree {
 			}
 		}
 
-		/**
-		 * 
-		 * @return: right child, can be a regular WAVLNode or EXT
-		 */
-		public WAVLNode getRight() {//TODO - return null if child is EXT?
-				if (hasRight()){
-					return this.right;
-				}
-				else {
-					return null;
-				}
+
+
+		public WAVLNode getRight() {
+			if (this.hasRight()) {
+				return this.right;
+			} else {
+				return null;
+			}
 		}
 
 		public void setRight(WAVLNode newRight) {
 			this.right = newRight;
 			if (newRight!=EXT){
 				this.getLeft().setParent(this);
+
 			}
 		}
 
@@ -834,8 +938,25 @@ public class WAVLTree {
 			return this.parent;
 		}
 
+		/**
+		 * @param newParent != EXT
+		 * @param newParent.key != this.key
+		 */
 		public void setParent(WAVLNode newParent) {
 			this.parent = newParent;
+			if (this.getKey() > newParent.getKey()) {
+				newParent.setRight(this);
+			} else {
+				newParent.setLeft(this);
+			}
+		}
+		
+		public int getRank() {
+			return this.rank;
+		}
+		
+		public void setRank(int newRank) {
+			this.rank = newRank;
 		}
 		
 		/**
@@ -843,7 +964,7 @@ public class WAVLTree {
 		 * 
 		 */
 		public boolean isInnerNode() {
-			return !(this.getLeft() == EXT && this.getRight() == EXT);
+			return (this.hasLeft() || this.hasRight());
 		}
 
 		public int getSubtreeSize() {
@@ -870,4 +991,106 @@ public class WAVLTree {
 
 	
 }
+  
+		/**
+		 * @return $ret min node such that $ret.key > $this.key
+		 * @post ($ret.rank < $this.rank) => $ret.left == EXT
+		 * @post ($ret == $this) => ($tree.max() == $this)
+		 */
+		public WAVLNode successor() {
+			WAVLNode successorNode;
+			
+			// if $this has a right subtree, successor is in it
+			if (this.hasRight()) {
+				successorNode = this.getRight();
+			
+				while (successorNode.hasLeft()) {
+					successorNode = successorNode.getLeft();
+				}
+			
+			// $this has no right subtree, successor is first right parent
+			} else {
+				successorNode = this;
+				
+				while ((successorNode.getParent() != null) && successorNode.isRight()) {
+					successorNode = successorNode.getParent();
+				}
+			}
+			
+			return successorNode;
+		}
+		
+		private boolean isRight() {
+			return (this.getParent().getRight() == this);
+		}
+		
+		private boolean isLeft() {
+			return (this.getParent().getLeft() == this);
+		}
+		
+		
+		/**
+		 * @Description: replaces all pointers from $this siblings
+		 * to @param.replacement and points from @param.replacement
+		 * to $this siblings. @imp Does not change rank and size.
+		 */
+		private void replace(WAVLNode replacement) {
+			replacement.setParent(this.getParent());
+			replacement.setLeft(this.getLeft());
+			replacement.setRight(this.getRight());
+		}
+		
+		/**
+		 * Description: collapses $this node to it's parent's position.
+		 * 
+		 * @imp this method assumes $this node is the right child of
+		 * the parent and has no left child, so it does not treat all cases.
+		 * This method is specifically built for a private case of
+		 * transplant.
+		 */
+		private void collapse() {
+			WAVLNode tempParent = this.getParent();
+			this.setParent(tempParent.getParent());
+			this.setLeft(tempParent.getLeft());
+		}
+		
+		/**
+		 * @pre this.isInnerNode()
+		 * 
+		 * @imp NOTE: this function does not update node sizes,
+		 * rather it returns the lowest node requiring update and
+		 * trusts later actions to update the size.
+		 */
+		public WAVLNode transplant() {
+			WAVLNode donor = this.successor();
+			
+			if (donor.getParent() == this) {
+				// transplant node has a leaf as a right child
+				donor.collapse();
+				return donor;
+				
+			} else if (donor == this) {
+				// transplant node has no successor, and therefore
+				// has no right child
+				WAVLNode newOrigin = donor.getParent();
+				if (this.hasLeft()) {
+					this.getLeft().setParent(this.getParent());
+				} else {
+					donor.getParent().setRight(EXT);
+				}
+				return newOrigin;
+				
+			} else {
+				// since we know donor is a successor, we can safely
+				// assume that it is both a left child and that it has
+				// no left child.
+				WAVLNode newOrigin = donor.getParent();
+				newOrigin.setLeft(donor.getRight());
+				this.replace(donor);
+				donor.setRank(this.getRank());
+				
+				return newOrigin;
+			}
+		}
+	}
 }
